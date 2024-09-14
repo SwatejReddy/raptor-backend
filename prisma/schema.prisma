@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  username    String   @unique
+  name        String
+  email       String   @unique
+  password    String
+  verified    Boolean  @default(false)
+  dateCreated DateTime @default(now())
+  dateUpdated DateTime @updatedAt
+
+  // Relations
+  Rapts     Rapt[]
+  Likes     Like[]
+  Ripples   Ripple[]
+  Folders   Folder[]
+  Bookmarks Bookmark[]
+  Followers Follow[]   @relation("following")
+  Following Follow[]   @relation("user")
+}
+
+model Rapt {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  title       String
+  content     String
+  likes       Int      @default(0)
+  bookmarks   Int      @default(0)
+  dateCreated DateTime @default(now())
+  dateUpdated DateTime @updatedAt
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id])
+  Likes     Like[]
+  Ripples   Ripple[]
+  Bookmarks Bookmark[]
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  raptId    Int
+  dateLiked DateTime @default(now())
+
+  // Relations
+  rapt Rapt @relation(fields: [raptId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Ripple {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  raptId      Int
+  content     String
+  dateCreated DateTime @default(now())
+  dateUpdated DateTime @updatedAt
+  deleted     Boolean  @default(false)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+  rapt Rapt @relation(fields: [raptId], references: [id])
+}
+
+model Folder {
+  id     Int    @id @default(autoincrement())
+  name   String
+  userId Int
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id])
+  Bookmarks Bookmark[]
+}
+
+model Bookmark {
+  id             Int      @id @default(autoincrement())
+  raptId         Int
+  userId         Int
+  folderId       Int
+  dateBookmarked DateTime @default(now())
+
+  // Relations
+  folder Folder @relation(fields: [folderId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  rapt   Rapt   @relation(fields: [raptId], references: [id])
+}
+
+model Follow {
+  id           Int      @id @default(autoincrement())
+  userId       Int //you 2 //followerId
+  followingId  Int //person you follow 1
+  dateFollowed DateTime @default(now())
+
+  // Relations
+  user      User @relation("user", fields: [userId], references: [id])
+  following User @relation("following", fields: [followingId], references: [id])
+}
